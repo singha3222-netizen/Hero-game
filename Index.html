@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>เกมบัญชีฮีโร่</title>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <h1>⚔️ เกมบัญชีฮีโร่ ⚔️</h1>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div>HP ฮีโร่: <div class="hpBar"><div id="hpHeroBar"></div></div><span id="hpHeroText"></span></div>
+    <div>HP บอส: <div class="hpBar"><div id="hpBossBar"></div></div><span id="hpBossText"></span></div>
+    <div>บัฟ: <span id="buffs">ไม่มี</span></div>
+    <div>ทอง: <span id="gold">0</span></div>
+  </div>
+
+  <!-- Canvas -->
+  <canvas id="c" width="320" height="180"></canvas>
+
+  <!-- Controls -->
+  <div class="btns">
+    <button id="startFight">เริ่มด่าน</button>
+  </div>
+
+  <!-- Shop -->
+  <div id="shop">
+    <h3>🏪 ร้านค้า</h3>
+    <button data-item="potion">💊 ซื้อยา (+50 HP) - 30 ทอง</button>
+    <button data-item="sword">🪄 ซื้อคฑาเวท (+โจมตีแรง) - 80 ทอง</button>
+  </div>
+
+  <!-- Question Panel -->
+  <div id="questionPanel" style="display:none;">
+    <div id="qText"></div>
+    <div id="qChoices"></div>
+    <button id="answerBtn">ตอบคำถาม</button>
+  </div>
+
+  <!-- Log -->
+  <div id="log"></div>
+
+  <!-- Leaderboard -->
+  <div id="leaderboard">
+    <h3>🏅 กระดานอันดับ</h3>
+    <table>
+      <thead>
+        <tr><th>อันดับ</th><th>ชื่อผู้เล่น</th><th>เวลา</th><th>วันที่</th></tr>
+      </thead>
+      <tbody id="leaderboardBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Admin Panel -->
+  <div id="adminPanel">
+    <h3>⚙️ หลังบ้าน</h3>
+    <button id="addGoldBtn">💰 เสกทอง +9999</button>
+    <button id="refreshLB">🔄 รีเฟรช Leaderboard</button>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="main.js"></script>
+  <script type="module" src="admin.js"></script>
+</body>
+</html>

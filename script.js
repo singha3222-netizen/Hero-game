@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 
-import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
 // ================= Firebase =================
 
@@ -40,6 +40,8 @@ const state = {
 
   maxhp: 100,
 
+  gold: 60,
+
   buffs: { sword: 0 },
 
   inFight: false,
@@ -74,6 +76,8 @@ function updateHUD() {
 
   el('buffs').textContent = state.buffs.sword ? 'คฑาเวท' : 'ไม่มี';
 
+  el('gold').textContent = state.gold;
+
 }
 
 // ================= Log =================
@@ -96,25 +100,35 @@ function drawScene(){
 
   ctx.clearRect(0,0,el('c').width,el('c').height);
 
-  ctx.fillStyle='#0b0b20'; ctx.fillRect(0,0,el('c').width,el('c').height);
+  ctx.fillStyle='#0b0b20'; 
 
-  for(let e of effects){
-
-    e.t++; e.alpha -= 0.03;
-
-    if(e.type==='light') drawLightning(e);
-
-    if(e.type==='explosion') drawExplosion(e);
-
-  }
-
-  effects = effects.filter(e => e.alpha > 0.05);
+  ctx.fillRect(0,0,el('c').width,el('c').height);
 
   drawHero();
 
   drawBoss();
 
-  state.heroAnim++; state.bossAnim++;
+  for(let i=effects.length-1;i>=0;i--){
+
+    const e = effects[i];
+
+    if(e.type==='light') drawLightning(e);
+
+    if(e.type==='explosion') drawExplosion(e);
+
+    if(e.type==='firework') drawFirework(e);
+
+    e.t++;
+
+    e.alpha -= 0.02;
+
+    if(e.alpha <= 0) effects.splice(i,1);
+
+  }
+
+  state.heroAnim++;
+
+  state.bossAnim++;
 
   if(state.heroHit>0) state.heroHit--;
 
@@ -134,41 +148,19 @@ function drawHero(){
 
   ctx.translate(x, y);
 
-  // ตัวฮีโร่
-
   ctx.fillStyle = state.heroHit > 0 ? '#94a3b8' : '#1e3a8a';
 
   ctx.fillRect(-10, 0, 20, 30);
 
-  // เสื้อคลุมสามเหลี่ยม
-
   ctx.beginPath();
 
-  ctx.moveTo(-15, 0);
+  ctx.moveTo(-15,0); ctx.lineTo(0,-25); ctx.lineTo(15,0); ctx.closePath();
 
-  ctx.lineTo(0, -25);
+  ctx.fillStyle = '#2563eb'; ctx.fill();
 
-  ctx.lineTo(15, 0);
+  ctx.strokeStyle = '#facc15'; ctx.lineWidth = 3;
 
-  ctx.closePath();
-
-  ctx.fillStyle = '#2563eb';
-
-  ctx.fill();
-
-  // ดาบ/ไม้เท้า
-
-  ctx.strokeStyle = '#facc15';
-
-  ctx.lineWidth = 3;
-
-  ctx.beginPath();
-
-  ctx.moveTo(10, 5);
-
-  ctx.lineTo(25, -10);
-
-  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(10,5); ctx.lineTo(25,-10); ctx.stroke();
 
   ctx.restore();
 
@@ -178,53 +170,45 @@ function drawBoss(){
 
   ctx.save();
 
-  const x = 240;
+  const x = 240 + Math.sin(state.bossAnim*0.05)*5;
 
-  const y = 90 + Math.sin(state.bossAnim * 0.08) * 0.4;
+  const y = 90 + Math.sin(state.bossAnim*0.08)*2;
 
   ctx.translate(x, y);
 
-  // ตัวบอส
-
-  ctx.fillStyle = state.bossHit > 0 ? '#b91c1c' : '#3b0000';
-
-  ctx.beginPath(); ctx.ellipse(0, 0, 35, 45, 0, 0, Math.PI*2); ctx.fill();
-
-  // แขน/เขา
-
-  ctx.fillStyle = 'rgba(80,0,0,0.7)';
+  ctx.fillStyle = state.bossHit>0 ? '#b91c1c' : '#3b0000';
 
   ctx.beginPath();
 
-  ctx.moveTo(-50, -10); ctx.lineTo(-80, -30); ctx.lineTo(-40, 0);
-
-  ctx.moveTo(50, -10); ctx.lineTo(80, -30); ctx.lineTo(40, 0);
+  ctx.ellipse(0,0,40,50,0,0,Math.PI*2);
 
   ctx.fill();
 
-  // ตา
-
-  ctx.fillStyle = '#f87171';
+  ctx.fillStyle='#ff0000';
 
   ctx.beginPath();
 
-  ctx.arc(-10, -5, 5, 0, Math.PI*2);
+  ctx.arc(-12,-10,5,0,Math.PI*2);
 
-  ctx.arc(10, -5, 5, 0, Math.PI*2);
+  ctx.arc(12,-10,5,0,Math.PI*2);
 
   ctx.fill();
 
-  // ปาก/ฟัน
+  ctx.fillStyle='#fff';
 
-  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath();
 
-  ctx.fillRect(-10, 15, 20, 15);
+  ctx.moveTo(-10,10); ctx.lineTo(-5,20); ctx.lineTo(0,10);
+
+  ctx.lineTo(5,20); ctx.lineTo(10,10);
+
+  ctx.fill();
 
   ctx.restore();
 
 }
 
-// ================= Effects =================
+// ================= Effects Draw =================
 
 function drawLightning(e){
 
@@ -246,7 +230,9 @@ function drawLightning(e){
 
   ctx.lineTo(240,95);
 
-  ctx.stroke(); ctx.restore();
+  ctx.stroke(); 
+
+  ctx.restore();
 
 }
 
@@ -258,75 +244,83 @@ function drawExplosion(e){
 
 }
 
-function heroAttack(){for(let i=0;i<3;i++) effects.push({type:'light',alpha:1,t:0}); state.bossHit=2;}
+function drawFirework(e){
 
-function bossAttack(){for(let i=0;i<10;i++) effects.push({type:'explosion',alpha:1,t:i}); state.heroHit=2;}
+  ctx.save();
+
+  ctx.fillStyle=`rgba(${Math.floor(200+Math.random()*55)},${Math.floor(Math.random()*255)},0,${e.alpha})`;
+
+  ctx.beginPath();
+
+  ctx.arc(e.x+e.dx*e.t,e.y+e.dy*e.t,e.size,0,Math.PI*2);
+
+  ctx.fill();
+
+  ctx.restore();
+
+}
+
+// ================= Attacks =================
+
+function heroAttack(){ for(let i=0;i<3;i++){ effects.push({type:'light',alpha:1,t:0}); } state.bossHit=2; }
+
+function bossAttack(){ for(let i=0;i<10;i++){ effects.push({type:'explosion',alpha:1,t:i}); } state.heroHit=2; }
 
 // ================= Questions =================
 
 const questions=[
 
-  ['งบดุลประกอบด้วยอะไรบ้าง?', ['สินทรัพย์ หนี้สิน ทุน','รายได้ ค่าใช้จ่าย','กระแสเงินสด'],0],
+  ['งบดุลประกอบด้วยอะไรบ้าง?',['สินทรัพย์ หนี้สิน ทุน','รายได้ ค่าใช้จ่าย','กระแสเงินสด'],0],
 
-  ['งบกำไรขาดทุนใช้เพื่อ?', ['วัดผลการดำเนินงาน','วัดฐานะการเงิน','วัดกระแสเงินสด'],0],
+  ['งบกำไรขาดทุนใช้เพื่อ?',['วัดผลการดำเนินงาน','วัดฐานะการเงิน','วัดกระแสเงินสด'],0],
 
-  ['บัญชีคู่หมายถึง?', ['เดบิต = เครดิต','สินทรัพย์ = รายได้','ทุน = หนี้สิน'],0],
+  ['บัญชีคู่หมายถึง?',['เดบิต = เครดิต','สินทรัพย์ = รายได้','ทุน = หนี้สิน'],0],
 
-  ['รายการในฝั่งเดบิตหมายถึง?', ['การเพิ่มสินทรัพย์','การลดสินทรัพย์','การเพิ่มรายได้'],0],
+  ['รายการในฝั่งเดบิตหมายถึง?',['การเพิ่มสินทรัพย์','การลดสินทรัพย์','การเพิ่มรายได้'],0],
 
-  ['รายการในฝั่งเครดิตหมายถึง?', ['การเพิ่มรายได้','การเพิ่มค่าใช้จ่าย','การเพิ่มสินทรัพย์'],0],
+  ['สินทรัพย์หมุนเวียนคืออะไร?',['เงินสด ลูกหนี้ สินค้าคงเหลือ','ที่ดิน อาคาร','ทุนจดทะเบียน'],0],
 
-  ['ต้นทุนขายคำนวณอย่างไร?', ['สินค้าต้นงวด + ซื้อ - ปลายงวด','รายได้ - ค่าใช้จ่าย','สินทรัพย์ - หนี้สิน'],0],
+  ['ค่าเสื่อมราคาคืออะไร?',['การลดมูลค่าสินทรัพย์','รายได้','หนี้สิน'],0],
 
-  ['ต้นทุนการผลิตคืออะไร?', ['ค่าแรง + วัตถุดิบ + ค่าใช้จ่ายการผลิต','รายได้ทั้งหมด','กำไรขั้นต้น'],0],
+  ['กระแสเงินสดมาจากไหน?',['กิจกรรมดำเนินงาน','กิจกรรมลงทุน','กิจกรรมจัดหาเงินทุน'],0],
 
-  ['ภาษีมูลค่าเพิ่มคิดกี่เปอร์เซ็นต์?', ['7%','5%','10%'],0],
+  ['ทุนจดทะเบียนคืออะไร?',['ทุนผู้ถือหุ้น','หนี้สิน','สินทรัพย์'],0],
 
-  ['ภาษีหัก ณ ที่จ่าย ใช้เมื่อ?', ['มีการจ่ายค่าบริการหรือแรงงาน','ขายสินค้าทั่วไป','ซื้อต่างประเทศ'],0],
+  ['งบกำไรขาดทุนบวกรายได้แล้วได้อะไร?',['กำไรสุทธิ','ขาดทุน','ทุน'],0],
 
-  ['สมุดรายวันทั่วไปคืออะไร?', ['สมุดบันทึกรายการประจำวัน','สมุดรวมยอดบัญชี','สมุดงบดุล'],0],
-
-  ['ใบกำกับภาษีออกเมื่อ?', ['มีการขายสินค้าหรือบริการ','รับเงินสดเท่านั้น','จ่ายค่าแรง'],0],
-
-  ['เอกสารใดใช้รับเงินสด?', ['ใบเสร็จรับเงิน','ใบสำคัญจ่าย','ใบกำกับภาษี'],0],
-
-  ['เอกสารใดใช้จ่ายเงินสด?', ['ใบสำคัญจ่าย','ใบกำกับภาษี','ใบเสร็จรับเงิน'],0],
-
-  ['งบกระแสเงินสดแสดงอะไร?', ['การรับและจ่ายเงินสด','กำไรสุทธิ','ยอดสินทรัพย์'],0],
-
-  ['งบแสดงฐานะการเงินคือ?', ['งบดุล','งบกำไรขาดทุน','งบต้นทุน'],0],
-
-  ['รายการปรับปรุงคืออะไร?', ['การแก้ไขยอดสิ้นงวด','การเพิ่มทุน','การโอนเงิน'],0],
-
-  ['ค่าเสื่อมราคาคืออะไร?', ['การกระจายต้นทุนสินทรัพย์ถาวร','การเพิ่มทุน','การลดหนี้สิน'],0],
-
-  ['ค่าเผื่อหนี้สงสัยจะสูญคือ?', ['ประมาณการหนี้ที่อาจเก็บไม่ได้','หนี้สินคงค้าง','ทุนสำรอง'],0],
-
-  ['สินทรัพย์หมุนเวียนหมายถึง?', ['สินทรัพย์ที่ใช้จ่ายใน 1 ปี','สินทรัพย์ถาวร','ทุนเจ้าของ'],0],
-
-  ['เจ้าหนี้การค้าอยู่ฝั่งใด?', ['หนี้สิน','สินทรัพย์','ทุน'],0],
-
-  ['ลูกหนี้การค้าอยู่ฝั่งใด?', ['สินทรัพย์','หนี้สิน','ทุน'],0],
-
-  ['กำไรขั้นต้นคำนวณจาก?', ['รายได้จากการขาย - ต้นทุนขาย','รายได้ - ค่าใช้จ่ายทั้งหมด','สินทรัพย์ - หนี้สิน'],0],
-
-  ['กำไรสุทธิเท่ากับ?', ['กำไรขั้นต้น - ค่าใช้จ่ายอื่น','รายได้ทั้งหมด','ต้นทุนขาย - รายได้'],0],
-
-  ['ถ้าซื้ออุปกรณ์ด้วยเงินสด?', ['สินทรัพย์เพิ่มลดเท่ากัน','สินทรัพย์เพิ่ม','ทุนลด'],0],
-
-  ['ถ้ารับเงินค่าบริการล่วงหน้า?', ['สินทรัพย์และหนี้สินเพิ่มขึ้น','รายได้เพิ่มทันที','ทุนลด'],0]
+  ['รายการเครดิตหมายถึง?',['การลดสินทรัพย์','การเพิ่มรายได้','การเพิ่มสินทรัพย์'],1]
 
 ];
 
+let remainingQuestions = [...questions];
+
 let correctAnswer = null;
+
+function shuffleChoices(choices, correctIndex){
+
+  let arr = choices.map((c,i)=>({c,i}));
+
+  arr.sort(()=>Math.random()-0.5);
+
+  const newIndex = arr.findIndex(x=>x.i===correctIndex);
+
+  return [arr.map(x=>x.c), newIndex];
+
+}
 
 function newQuestion(){
 
-  const [q,choices,a] = questions[Math.floor(Math.random()*questions.length)];
+  if(remainingQuestions.length===0) remainingQuestions=[...questions];
+
+  const idx = Math.floor(Math.random()*remainingQuestions.length);
+
+  let [q,choices,a] = remainingQuestions.splice(idx,1)[0];
+
+  [choices,a] = shuffleChoices(choices,a);
 
   el('questionPanel').style.display='block';
 
-  el('qText').textContent = q;
+  el('qText').textContent=q;
 
   el('qChoices').innerHTML = choices.map((c,i)=>`<label><input type="radio" name="ans" value="${i}"> ${c}</label>`).join('');
 
@@ -336,19 +330,19 @@ function newQuestion(){
 
 // ================= Start Fight =================
 
-el('startFight').onclick = () => {
+el('startFight').onclick=()=>{
 
   if(state.inFight) return;
 
-  state.inFight = true;
+  state.inFight=true;
 
-  bossHP = bossHPMax;
+  bossHP=bossHPMax;
 
   log('👹 ปีศาจปรากฏแล้ว!');
 
-  startTime = Date.now();
+  startTime=Date.now();
 
-  correctAnswer = newQuestion();
+  correctAnswer=newQuestion();
 
   updateHUD();
 
@@ -356,9 +350,9 @@ el('startFight').onclick = () => {
 
 // ================= Answer =================
 
-el('answerBtn').onclick = () => {
+el('answerBtn').onclick=()=>{
 
-  const selected = [...document.getElementsByName('ans')].find(x=>x.checked);
+  const selected=[...document.getElementsByName('ans')].find(x=>x.checked);
 
   if(!selected) return alert('เลือกคำตอบก่อน!');
 
@@ -374,118 +368,196 @@ el('answerBtn').onclick = () => {
 
     bossHP -= dmg;
 
-    log(`⚡ โจมตีปีศาจ -${dmg}`);
+    state.gold += 25;
 
-    if(bossHP<=0){
+    log(`⚡ โจมตีปีศาจ -${dmg} | ทอง +25`);
+
+    if(bossHP <=0){
 
       const elapsed = Math.floor((Date.now()-startTime)/1000);
 
-      log(`🏆 ชนะ! ใช้เวลา ${elapsed} วินาที`);
-
-      saveScore(playerName, elapsed);
-
       state.inFight=false;
 
+      bossHP=0;
+
       updateHUD();
+
+      // Victory ขึ้นตรงกลาง
+
+      const victoryText = document.createElement('div');
+
+      victoryText.id = 'victoryText';
+
+      victoryText.style.position='absolute';
+
+      victoryText.style.top='50px';
+
+      victoryText.style.left='50%';
+
+      victoryText.style.transform='translateX(-50%)';
+
+      victoryText.style.fontSize='30px';
+
+      victoryText.style.color='gold';
+
+      victoryText.style.textShadow='2px 2px 5px #000';
+
+      victoryText.textContent = '🏆 Victory!';
+
+      document.body.appendChild(victoryText);
+
+      victoryEffect(); 
+
+      saveScore(playerName, elapsed).then(()=>updateLeaderboard());
+
+      setTimeout(()=>{victoryText.remove();},5000);
+
+      log(`🏆 ชนะปีศาจ! ใช้เวลา ${elapsed} วินาที | ทองรวม ${state.gold}`);
 
       return;
 
     }
 
-  }else{
+  } else {
 
     bossAttack();
 
-    state.hp -= 25;
+    state.hp -=25;
 
     log('🔥 ปีศาจโจมตี -25 HP');
 
-    if(state.hp<=0){ alert('💀 Game Over'); state.hp=state.maxhp; state.inFight=false; updateHUD(); return;}
+    if(state.hp<=0){
+
+      log('💀 คุณแพ้ปีศาจ!');
+
+      state.inFight=false;
+
+      state.hp=state.maxhp;
+
+      updateHUD();
+
+    }
 
   }
 
-  updateHUD();
+  if(state.inFight) correctAnswer=newQuestion();
 
-  setTimeout(()=>{correctAnswer=newQuestion();},500);
+  updateHUD();
 
 };
 
-// ================= Shop =================
+// ================= Victory Effect =================
 
-document.querySelectorAll('[data-item]').forEach(btn=>{
+function victoryEffect(){
 
-  btn.onclick=()=>{
+  for(let i=0;i<80;i++){
 
-    const item = btn.dataset.item;
+    effects.push({
 
-    if(item==='potion'){state.hp=Math.min(state.maxhp,state.hp+50); log('💊 +50 HP');}
+      type:'firework',
 
-    else if(item==='sword'){state.buffs.sword=1; log('🪄 คฑาเวทพร้อม!');}
+      x:160 + Math.random()*160-80,
 
-    updateHUD();
+      y:80 + Math.random()*80-40,
 
-  };
+      t:0,
 
-});
+      alpha:1,
 
-// ================= Firebase Save =================
+      dx:Math.random()*4-2,
 
-async function saveScore(name, time){
+      dy:Math.random()*-6-2,
 
-  const data = { name,time,date:new Date().toLocaleString()};
+      size:Math.random()*4+2
 
-  await set(ref(db,'scores/'+name),data);
+    });
 
-  loadLeaderboard();
+  }
 
 }
 
-// ================= Load Leaderboard =================
+// ================= Save Score =================
 
-async function loadLeaderboard(){
+function saveScore(name,time){
 
-  const snapshot = await get(child(ref(db),'scores'));
+  return new Promise((resolve,reject)=>{
 
-  let scores = [];
+    const scoreRef = ref(db,'scores/'+name);
 
-  if(snapshot.exists()){ scores=Object.values(snapshot.val()); }
+    const record = { time, date: new Date().toLocaleString() };
 
-  scores.sort((a,b)=>a.time-b.time);
+    get(scoreRef).then(snapshot=>{
 
-  const tbody = el('leaderboardBody');
+      let prev = snapshot.val();
 
-  if(!tbody) return;
+      if(!prev || time < prev.time){
 
-  tbody.innerHTML='';
+        set(scoreRef, record).then(()=>resolve());
 
-  scores.forEach((s,i)=>{
+      } else resolve();
 
-    const tr=document.createElement('tr');
-
-    if(s.name===playerName) tr.classList.add('self');
-
-    tr.innerHTML=`<td>${i+1}</td><td>${s.name}</td><td>${s.time}</td><td>${s.date}</td>`;
-
-    tbody.appendChild(tr);
+    }).catch(err=>reject(err));
 
   });
 
 }
 
-// ================= Game Loop =================
+// ================= Leaderboard =================
 
-function loop(){
+function updateLeaderboard(){
 
-  drawScene();
+  const lbEl = el('leaderboardBody');
 
-  requestAnimationFrame(loop);
+  lbEl.innerHTML='Loading...';
+
+  const scoresRef = ref(db,'scores');
+
+  get(scoresRef).then(snapshot=>{
+
+    const data = snapshot.val() || {};
+
+    const arr = Object.keys(data).map(name=>({name, time:data[name].time, date:data[name].date}));
+
+    arr.sort((a,b)=>a.time-b.time);
+
+    lbEl.innerHTML = arr.map((x,i)=>`<tr>
+
+      <td>${i+1}</td>
+
+      <td>${x.name}</td>
+
+      <td>${x.time}</td>
+
+      <td>${x.date}</td>
+
+    </tr>`).join('');
+
+  });
 
 }
 
-// ================= Init =================
+// ================= Shop =================
+
+el('shop').addEventListener('click',e=>{
+
+  const item = e.target.dataset.item;
+
+  if(!item) return;
+
+  if(item==='potion' && state.gold>=30){ state.gold-=30; state.hp=Math.min(state.hp+50,state.maxhp); log('💊 ซื้อยา +50 HP'); }
+
+  if(item==='sword' && state.gold>=80){ state.gold-=80; state.buffs.sword=1; log('🪄 ซื้อคฑาเวท +โจมตีแรง'); }
+
+  updateHUD();
+
+});
+
+// ================= Game Loop =================
+
+function gameLoop(){ drawScene(); requestAnimationFrame(gameLoop); }
+
+gameLoop();
 
 updateHUD();
 
-loadLeaderboard();
-
-loop();
+updateLeaderboard();

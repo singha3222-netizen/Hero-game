@@ -1,0 +1,109 @@
+body{
+
+  font-family:'Noto Sans Thai',sans-serif;
+
+  background: radial-gradient(circle at top, #001524, #000);
+
+  color:#e0e0e0;
+
+  margin:0; padding:10px;
+
+  text-align:center;
+
+}
+
+h1{color:#60a5fa;margin-bottom:10px;}
+
+.hud{
+
+  display:flex;flex-wrap:wrap;gap:10px;
+
+  justify-content:center;margin-bottom:10px;
+
+}
+
+.hud div{
+
+  background:rgba(0,0,0,0.3);padding:5px 10px;
+
+  border-radius:5px;
+
+}
+
+.hpBar{
+
+  width:100px;height:15px;background:#333;
+
+  display:inline-block;margin:0 5px;vertical-align:middle;
+
+  border-radius:5px;overflow:hidden;
+
+}
+
+.hpBar div{
+
+  height:100%;background:limegreen;width:100%;
+
+  transition:width 0.3s;
+
+}
+
+canvas{
+
+  border:1px solid #fff;margin:10px auto;display:block;
+
+}
+
+.btns, #shop{margin:10px 0;}
+
+button{
+
+  padding:5px 10px;margin:3px;background:#1e40af;color:#fff;
+
+  border:none;border-radius:5px;cursor:pointer;font-size:14px;
+
+}
+
+button:hover{background:#3b82f6;}
+
+#log{
+
+  height:120px;overflow-y:auto;
+
+  background:rgba(0,0,0,0.4);padding:5px;margin:5px;
+
+  border-radius:5px;text-align:left;font-size:14px;
+
+}
+
+#leaderboard{
+
+  margin-top:15px;
+
+}
+
+#leaderboard table{
+
+  width:100%;border-collapse:collapse;color:#fff;
+
+  font-size:14px;
+
+}
+
+#leaderboard th, #leaderboard td{
+
+  border:1px solid #444;padding:5px;
+
+}
+
+#leaderboard th{
+
+  background:#1e40af;
+
+}
+
+#leaderboard tr.self{
+
+  background:rgba(255,215,0,0.3);
+
+}
